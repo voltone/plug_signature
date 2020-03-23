@@ -130,7 +130,7 @@ adding `plug_body_digest` as well):
 def deps do
   [
     {:plug_body_digest, "~> 0.5.0"},
-    {:plug_signature, "~> 0.5.0"}
+    {:plug_signature, "~> 0.6.0"}
   ]
 end
 ```
