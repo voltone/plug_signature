@@ -31,7 +31,8 @@ defmodule PlugSignature.MixProject do
       {:nimble_parsec, "~> 0.5", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev},
       {:credo, "~> 1.1", only: :dev},
-      {:x509, "~> 0.5", only: :test}
+      {:x509, "~> 0.5", only: :test},
+      {:cowlib, "~> 2.8", only: :test}
     ]
   end
 
