@@ -73,7 +73,7 @@ defmodule PlugSignature.Config do
 
   defp opts_for_algorithm("hs2019", opts) do
     headers = Keyword.get(opts, :headers, @hs2019_default_headers)
-    header_list = headers |> String.downcase() |> String.split(" ")
+    header_list = headers |> String.downcase() |> String.split(" ", trim: true)
     validate_header_list!(header_list, "hs2019")
     validity = Keyword.get(opts, :validity, @default_validity)
 
@@ -105,7 +105,7 @@ defmodule PlugSignature.Config do
     headers =
       Keyword.get(legacy_opts, :headers, Keyword.get(opts, :headers, @legacy_default_headers))
 
-    header_list = headers |> String.downcase() |> String.split(" ")
+    header_list = headers |> String.downcase() |> String.split(" ", trim: true)
     validate_header_list!(header_list, algorithm)
 
     validity =

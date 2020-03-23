@@ -139,6 +139,7 @@ defmodule PlugSignature do
   import Plug.Conn
   require Logger
   alias PlugSignature.Config
+  alias PlugSignature.SignatureString
   alias PlugSignature.Crypto
 
   @behaviour Plug
@@ -201,7 +202,7 @@ defmodule PlugSignature do
            opts[:callback_module].client_lookup(key_id, algorithm, conn),
          # Build string to sign based on headers and algorithm
          {:ok, signature_string} <-
-           build_signature_string(conn, signature_opts, algorithm, header_list),
+           SignatureString.build(conn, signature_opts, algorithm, header_list),
          # Verify the signature
          {:ok, true} <- Crypto.verify(signature_string, algorithm, signature, credentials) do
       # All checks passed: continue
@@ -224,7 +225,7 @@ defmodule PlugSignature do
          {:ok, signature_b64} <- fetch(signature_opts, :signature),
          {:ok, signature} <- decode64(signature_b64) do
       headers = Keyword.get(signature_opts, :headers, algorithm_opts.default_headers)
-      header_list = headers |> String.downcase() |> String.split(" ")
+      header_list = headers |> String.downcase() |> String.split(" ", trim: true)
 
       case algorithm_opts.header_list -- header_list do
         [] ->
@@ -250,9 +251,9 @@ defmodule PlugSignature do
     end
   end
 
-  defp verify_signature_timestamp(signature_opts, validity) do
+  def verify_signature_timestamp(signature_opts, validity \\ -300..30) do
     with {:ok, created} <- Keyword.fetch(signature_opts, :created),
-         {unix_int, ""} <- Integer.parse(created) do
+         {:parse, {unix_int, ""}} <- {:parse, Integer.parse(created)} do
       unix_int
       |> DateTime.from_unix!()
       |> verify_validity(validity)
@@ -266,9 +267,9 @@ defmodule PlugSignature do
     end
   end
 
-  defp verify_signature_expiry(signature_opts) do
+  def verify_signature_expiry(signature_opts) do
     with {:ok, expires_str} <- Keyword.fetch(signature_opts, :expires),
-         {expires, ""} <- Integer.parse(expires_str) do
+         {:parse, {expires, ""}} <- {:parse, Integer.parse(expires_str)} do
       now = DateTime.utc_now() |> DateTime.to_unix()
 
       if now > expires do
@@ -313,50 +314,6 @@ defmodule PlugSignature do
       age > future -> {:error, "request timestamp in the future"}
       true -> :ok
     end
-  end
-
-  defp build_signature_string(conn, signature_opts, algorithm, header_list) do
-    signature_string =
-      Enum.map_join(header_list, "\n", &header_part(conn, signature_opts, algorithm, &1))
-
-    {:ok, signature_string}
-  rescue
-    # Handle the case where (created) or (expires) pseudo header is not
-    # available or not supported by the algorithm
-    _key_error -> {:error, "could not build signature_string"}
-  end
-
-  defp header_part(conn, _signature_opts, _algorithm, "(request-target)") do
-    query_part =
-      case conn.query_string do
-        "" -> ""
-        query -> "?#{query}"
-      end
-
-    "(request-target): #{String.downcase(conn.method)} #{conn.request_path}#{query_part}"
-  end
-
-  defp header_part(_conn, signature_opts, "hs2019", "(created)") do
-    "(created): #{Keyword.fetch!(signature_opts, :created)}"
-  end
-
-  defp header_part(_conn, signature_opts, "hs2019", "(expires)") do
-    "(expires): #{Keyword.fetch!(signature_opts, :expires)}"
-  end
-
-  defp header_part(conn, _signature_opts, _algorithm, header)
-       when header not in ["(created)", "(expires)"] do
-    header_name = String.downcase(header)
-
-    value =
-      conn
-      |> get_req_header(header_name)
-      |> Enum.map(&String.trim/1)
-      |> Enum.join(", ")
-
-    if value == "", do: raise("Missing header")
-
-    "#{header_name}: #{value}"
   end
 
   defp on_success(nil, conn, _client), do: conn
