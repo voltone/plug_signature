@@ -44,11 +44,7 @@ defmodule PlugSignature.Crypto do
   """
   def verify!(payload, "hs2019", signature, rsa_public_key(publicExponent: e, modulus: n)) do
     # Use PSS padding; requires workaround for https://bugs.erlang.org/browse/ERL-878
-    :crypto.verify(:rsa, :sha512, payload, signature, [e, n],
-      rsa_padding: :rsa_pkcs1_pss_padding,
-      rsa_pss_saltlen: 94,
-      rsa_mgf1_md: :sha256
-    )
+    :crypto.verify(:rsa, :sha512, payload, signature, [e, n], rsa_padding: :rsa_pkcs1_pss_padding)
   end
 
   def verify!(payload, "hs2019", signature, {_point, _ecpk_parameters} = public_key) do
@@ -114,11 +110,7 @@ defmodule PlugSignature.Crypto do
   """
   def sign!(payload, "hs2019", rsa_private_key(publicExponent: e, modulus: n, privateExponent: d)) do
     # Use PSS padding; requires workaround for https://bugs.erlang.org/browse/ERL-878
-    :crypto.sign(:rsa, :sha512, payload, [e, n, d],
-      rsa_padding: :rsa_pkcs1_pss_padding,
-      rsa_pss_saltlen: 94,
-      rsa_mgf1_md: :sha256
-    )
+    :crypto.sign(:rsa, :sha512, payload, [e, n, d], rsa_padding: :rsa_pkcs1_pss_padding)
   end
 
   def sign!(payload, "hs2019", ec_private_key() = private_key) do
