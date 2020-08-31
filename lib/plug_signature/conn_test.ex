@@ -52,6 +52,8 @@ defmodule PlugSignature.ConnTest do
       parameter in the Authorization header
   """
   def with_signature(conn, key, key_id, opts \\ []) do
+    conn = maybe_add_host_header(conn)
+
     request_target =
       Keyword.get_lazy(opts, :request_target, fn ->
         method = conn.method |> to_string |> String.downcase()
@@ -193,6 +195,18 @@ defmodule PlugSignature.ConnTest do
     now = DateTime.utc_now() |> DateTime.to_unix()
     to_string(now + validity)
   end
+
+  defp maybe_add_host_header(%Plug.Conn{host: host} = conn) when is_binary(host) do
+    case get_req_header(conn, "host") do
+      [] ->
+        put_req_header(conn, "host", host)
+
+      _ ->
+        conn
+    end
+  end
+
+  defp maybe_add_host_header(conn), do: conn
 
   defp raise_on_missing_phoenix_conntest! do
     Code.ensure_loaded?(Phoenix.ConnTest) ||
