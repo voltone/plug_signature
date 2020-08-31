@@ -123,6 +123,7 @@ defmodule PlugSignature.ConnTest do
   is calculated and added as part of the header. Alternatively, a map of
   digest types and values may be provided.
   """
+  @deprecated "Use PlugBodyDigest.ConnTest.with_digest/2, from the plug_body_digest package"
   def with_digest(conn, body_or_digests)
 
   def with_digest(conn, digests) when is_map(digests) do
