@@ -462,6 +462,5 @@ defmodule PlugSignatureTest do
     host = "localhost:4000"
 
     Plug.Test.conn(:get, "http://#{host}/")
-    |> put_req_header("host", host)
   end
 end
