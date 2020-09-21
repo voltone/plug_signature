@@ -7,6 +7,24 @@ defmodule PlugSignature.ConnTest do
 
   alias PlugSignature.Crypto
 
+  # This module injects the signature calculation right before invoking the
+  # Phoenix Endpoint. This allows us to reuse Phoenix.ConnTest helpers for
+  # building the Plug.Conn struct, and add the signature once all the conn
+  # parameters have been initialized.
+  defmodule EndpointWrapper do
+    @moduledoc false
+
+    def init(args), do: args
+
+    def call(%Plug.Conn{private: %{PlugSignature.ConnTest => sign_opts}} = conn, args) do
+      endpoint = Keyword.fetch!(sign_opts, :endpoint)
+
+      conn
+      |> PlugSignature.ConnTest.with_signature(sign_opts[:key], sign_opts[:key_id], sign_opts)
+      |> endpoint.call(args)
+    end
+  end
+
   @doc """
   Adds an Authorization header with a signature. Requires a secret (RSA
   private key, EC private key or HMAC shared secret) and key ID.
@@ -158,19 +176,20 @@ defmodule PlugSignature.ConnTest do
 
       method = unquote(method)
 
-      quote do
-        is_binary(unquote(path)) || raise "Signed requests must specify a request path"
-
-        key = Keyword.fetch!(unquote(sign_opts), :key)
-        key_id = Keyword.fetch!(unquote(sign_opts), :key_id)
-
-        %{unquote(conn) | method: unquote(method), request_path: unquote(path)}
-        |> with_signature(key, key_id, unquote(sign_opts))
+      quote bind_quoted: [
+              conn: conn,
+              method: method,
+              path: path,
+              params_or_body: params_or_body,
+              sign_opts: sign_opts
+            ] do
+        conn
+        |> put_private(PlugSignature.ConnTest, [{:endpoint, @endpoint} | sign_opts])
         |> Phoenix.ConnTest.dispatch(
-          @endpoint,
-          unquote(method),
-          unquote(path),
-          unquote(params_or_body)
+          PlugSignature.ConnTest.EndpointWrapper,
+          method,
+          path,
+          params_or_body
         )
       end
     end
