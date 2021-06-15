@@ -22,5 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 plug_signature-*.tar
 
+# Because we're a library
+mix.lock
+
 plug_signature_example/_build/
 plug_signature_example/deps/
