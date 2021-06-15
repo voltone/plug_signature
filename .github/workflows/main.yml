@@ -56,4 +56,7 @@ jobs:
       - run: mix compile --warnings-as-errors
         if: ${{ matrix.lint }}
 
-      - run: mix test --include openssl
+      - run: mix credo
+        if: ${{ matrix.lint }}
+
+      - run: mix test
