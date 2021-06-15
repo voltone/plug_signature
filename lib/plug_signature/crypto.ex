@@ -54,7 +54,7 @@ defmodule PlugSignature.Crypto do
   end
 
   def verify!(payload, "hs2019", signature, hmac_secret) when is_binary(hmac_secret) do
-    signature == :crypto.hmac(:sha512, hmac_secret, payload)
+    signature == hmac(:sha512, hmac_secret, payload)
   end
 
   def verify!(payload, "rsa-sha256", signature, rsa_public_key() = public_key) do
@@ -74,7 +74,7 @@ defmodule PlugSignature.Crypto do
   end
 
   def verify!(payload, "hmac-sha256", signature, hmac_secret) when is_binary(hmac_secret) do
-    signature == :crypto.hmac(:sha256, hmac_secret, payload)
+    signature == hmac(:sha256, hmac_secret, payload)
   end
 
   def verify(payload, algorithm, signature, public_key) do
@@ -118,7 +118,7 @@ defmodule PlugSignature.Crypto do
   end
 
   def sign!(payload, "hs2019", hmac_secret) when is_binary(hmac_secret) do
-    :crypto.hmac(:sha512, hmac_secret, payload)
+    hmac(:sha512, hmac_secret, payload)
   end
 
   def sign!(payload, "rsa-sha256", rsa_private_key() = private_key) do
@@ -136,7 +136,7 @@ defmodule PlugSignature.Crypto do
   end
 
   def sign!(payload, "hmac-sha256", hmac_secret) when is_binary(hmac_secret) do
-    :crypto.hmac(:sha256, hmac_secret, payload)
+    hmac(:sha256, hmac_secret, payload)
   end
 
   @doc """
@@ -148,5 +148,15 @@ defmodule PlugSignature.Crypto do
     {:ok, sign!(payload, algorithm, private_key)}
   rescue
     _ -> {:error, "bad algorithm or key"}
+  end
+
+  if Code.ensure_loaded?(:crypto) and function_exported?(:crypto, :mac, 4) do
+    defp hmac(type, hmac_secret, payload) do
+      :crypto.mac(:hmac, type, hmac_secret, payload)
+    end
+  else
+    defp hmac(type, hmac_secret, payload) do
+      :crypto.hmac(type, hmac_secret, payload)
+    end
   end
 end
