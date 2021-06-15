@@ -7,7 +7,7 @@ defmodule PlugSignature.MixProject do
     [
       app: :plug_signature,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
