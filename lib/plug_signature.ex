@@ -95,12 +95,11 @@ defmodule PlugSignature do
       with an appropriate response; see `failure/3` below
     * `{m, f, a}` - call the function identified by the atom `f` in module
       `m`; the function receives the current `Plug.Conn` struct, the error
-      reason (see `t:error_reason/0`),the selected algorithm (a string) and
-      a list of required headers (strings, for possible use in a
-      'WWW-Authenticate' response header), along with any additional
-      parameters in the list `a`; it is expected to return the updated
-      `Plug.Conn` struct; see the implementation of `failure/4` for an
-      example
+      reason,the selected algorithm (a string) and a list of required headers
+      (strings, for possible use in a 'WWW-Authenticate' response header),
+      along with any additional parameters in the list `a`; it is expected to
+      return the updated `Plug.Conn` struct; see the implementation of
+      `failure/4` for an example
     * `nil` - do nothing
 
   ## Examples
