@@ -1,5 +1,12 @@
 # PlugSignature
 
+[![Github.com](https://github.com/voltone/plug_signature/workflows/CI/badge.svg)](https://github.com/voltone/plug_signature/actions)
+[![Hex.pm](https://img.shields.io/hexpm/v/plug_signature.svg)](https://hex.pm/packages/plug_signature)
+[![Hexdocs.pm](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/plug_signature/)
+[![Hex.pm](https://img.shields.io/hexpm/dt/plug_signature.svg)](https://hex.pm/packages/plug_signature)
+[![Hex.pm](https://img.shields.io/hexpm/l/plug_signature.svg)](https://hex.pm/packages/plug_signature)
+[![Github.com](https://img.shields.io/github/last-commit/voltone/plug_signature.svg)](https://github.com/voltone/plug_signature/commits/master)
+
 Plug for verifying request signatures according to the IETF HTTP signatures
 [draft specification](https://tools.ietf.org/html/draft-cavage-http-signatures-12).
 
@@ -53,7 +60,7 @@ defmodule MyApp.Auth do
         {:error, "Access key revoked: #{key_id}"}
 
       {:ok, %AccessKey{public_key: pem, client: client}} ->
-        public_key = X509.PublicKey.from_pem!(pem)
+        public_key = plug_signature.PublicKey.from_pem!(pem)
         {:ok, client, public_key}
     end
   end
