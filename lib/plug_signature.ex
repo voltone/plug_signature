@@ -154,10 +154,11 @@ defmodule PlugSignature do
   def call(conn, opts) do
     algorithms = Keyword.fetch!(opts, :algorithms)
     default_algorithm = Keyword.fetch!(opts, :default_algorithm)
+    header_name = Keyword.fetch!(opts, :header_name)
 
     # Parse Authorization header and select algorithm
-    with {:ok, authorization} <- get_authorization_header(conn),
-         {:ok, signature_opts} <- PlugSignature.Parser.authorization(authorization),
+    with {:ok, signature_string} <- get_signature(conn, header_name),
+         {:ok, signature_opts} <- PlugSignature.Parser.signature(signature_string),
          {:ok, algorithm, algorithm_opts} <-
            select_algorithm(signature_opts, default_algorithm, algorithms) do
       # Ready to call main verification function
@@ -169,10 +170,40 @@ defmodule PlugSignature do
     end
   end
 
-  defp get_authorization_header(conn) do
+  defp get_signature(conn, "authorization") do
     case get_req_header(conn, "authorization") do
-      [authorization | _] -> {:ok, authorization}
-      _otherwise -> {:error, "no authorization header"}
+      [] ->
+        {:error, "no authorization header"}
+
+      authorizations ->
+        case Enum.find_value(authorizations, &authorization_signature/1) do
+          nil ->
+            {:error, "no signature in authorization header"}
+
+          authorization ->
+            {:ok, String.trim(authorization)}
+        end
+    end
+  end
+
+  defp get_signature(conn, header_name) do
+    case get_req_header(conn, header_name) do
+      [signature_string | _] -> {:ok, String.trim(signature_string)}
+      _otherwise -> {:error, "no #{header_name} header"}
+    end
+  end
+
+  defp authorization_signature(authorization) do
+    case String.split(authorization, " ", parts: 2) do
+      [scheme, value] ->
+        if String.downcase(scheme) == "signature" do
+          value
+        else
+          nil
+        end
+
+      _ ->
+        nil
     end
   end
 

@@ -35,6 +35,7 @@ defmodule PlugSignature.Config do
   # can help catch configuration issues early
   @spec new(Keyword.t()) :: [
           {:callback_module, Module.t()}
+          | {:header_name, String.t()}
           | {:default_algorithm, String.t()}
           | {:algorithms, map()}
           | {:on_success, on_success()}
@@ -44,6 +45,8 @@ defmodule PlugSignature.Config do
     callback_module =
       Keyword.get(opts, :callback_module) ||
         raise PlugSignature.ConfigError, "missing mandatory option `:callback_module`"
+
+    header_name = Keyword.get(opts, :header_name, "authorization") |> String.downcase()
 
     algorithms = Keyword.get(opts, :algorithms, @default_algorithms)
 
@@ -61,6 +64,7 @@ defmodule PlugSignature.Config do
 
     [
       callback_module: callback_module,
+      header_name: header_name,
       default_algorithm: hd(algorithms),
       algorithms: algorithm_config,
       on_success: on_success,

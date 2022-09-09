@@ -6,8 +6,8 @@ defmodule PlugSignature.ParserTest do
 
   test "valid" do
     assert {:ok, params} =
-             authorization(
-               ~s(Signature keyId=123,signature="0123456789abcdef",created=1562570728)
+             signature(
+               ~s(keyId=123,signature="0123456789abcdef",created=1562570728)
              )
 
     assert params[:key_id] == "123"
@@ -17,8 +17,8 @@ defmodule PlugSignature.ParserTest do
 
   test "extra whitespace" do
     assert {:ok, params} =
-             authorization(
-               ~s(Signature  keyId=123, signature=  "0123456789abcdef", created = 1562570728)
+             signature(
+               ~s(keyId=123, signature=  "0123456789abcdef", created = 1562570728)
              )
 
     assert params[:key_id] == "123"
@@ -27,26 +27,26 @@ defmodule PlugSignature.ParserTest do
   end
 
   test "duplicate params" do
-    assert {:error, "malformed authorization header"} =
-             authorization(
-               ~s(Signature keyId=123,signature="0123456789abcdef",created=1562570728,keyId=234)
+    assert {:error, "malformed signature"} =
+             signature(
+               ~s(keyId=123,signature="0123456789abcdef",created=1562570728,keyId=234)
              )
   end
 
   test "unknown and case mismatch params" do
     assert {:ok, params} =
-             authorization(
-               ~s(Signature keyColor=red,Signature="0123456789abcdef",created=1562570728)
+             signature(
+               ~s(keyColor=red,Signature="0123456789abcdef",created=1562570728)
              )
 
     refute :keyColor in Keyword.keys(params)
-    refute :Signature in Keyword.keys(params)
+    refute :signature in Keyword.keys(params)
     refute :signature in Keyword.keys(params)
     assert params[:created] == "1562570728"
   end
 
   test "weird values with quoted characters" do
-    assert {:ok, params} = authorization(~S(Signature keyId="&^%$#@!,{}=\\\""))
+    assert {:ok, params} = signature(~S(keyId="&^%$#@!,{}=\\\""))
 
     assert params[:key_id] == ~S(&^%$#@!,{}=\")
   end
