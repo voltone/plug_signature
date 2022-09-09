@@ -7,7 +7,7 @@ defmodule PlugSignature.MixProject do
     [
       app: :plug_signature,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
@@ -28,7 +28,7 @@ defmodule PlugSignature.MixProject do
   defp deps do
     [
       {:plug, "~> 1.5"},
-      {:nimble_parsec, "~> 0.5", only: :dev},
+      {:nimble_parsec, "~> 1.0"},
       {:ex_doc, "~> 0.21", only: :dev},
       {:credo, "~> 1.1", only: :dev},
       {:x509, "~> 0.5", only: :test},

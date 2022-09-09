@@ -69,10 +69,33 @@ defmodule PlugSignatureTest do
       refute conn.halted
     end
 
+    test "valid, in Signature header", %{config: config, key: key, key_id: key_id} do
+      config = Keyword.put(config, :header_name, "signature")
+
+      conn =
+        conn()
+        |> with_signature(key, key_id, config)
+        |> PlugSignature.call(PlugSignature.init(config))
+
+      refute conn.halted
+    end
+
     test "valid, expires in the future", %{config: config, key: key, key_id: key_id} do
       conn =
         conn()
         |> with_signature(key, key_id, Keyword.put(config, :expires_in, 30))
+        |> PlugSignature.call(PlugSignature.init(config))
+
+      refute conn.halted
+    end
+
+    test "valid, extra Authorization header", %{config: config, key: key, key_id: key_id} do
+      extra_header = {"authorization", "Basic ZXhhbXBsZTpzZWNyZXQ="}
+
+      conn =
+        conn()
+        |> with_signature(key, key_id, config)
+        |> Map.update(:req_headers, [extra_header], &[extra_header | &1])
         |> PlugSignature.call(PlugSignature.init(config))
 
       refute conn.halted
@@ -91,6 +114,21 @@ defmodule PlugSignatureTest do
       assert capture_log(scenario) =~ "no authorization header"
     end
 
+    test "invalid, missing Signature header", %{config: config} do
+      config = Keyword.put(config, :header_name, "signature")
+
+      scenario = fn ->
+        conn =
+          conn()
+          |> PlugSignature.call(PlugSignature.init(config))
+
+        assert conn.halted
+        assert conn.status == 401
+      end
+
+      assert capture_log(scenario) =~ "no signature header"
+    end
+
     test "invalid, unexpected Authorization scheme", %{config: config} do
       scenario = fn ->
         conn =
@@ -102,7 +140,7 @@ defmodule PlugSignatureTest do
         assert conn.status == 401
       end
 
-      assert capture_log(scenario) =~ "malformed authorization header"
+      assert capture_log(scenario) =~ "no signature in authorization header"
     end
 
     test "invalid, missing keyId", %{config: config, key: key, key_id: key_id} do

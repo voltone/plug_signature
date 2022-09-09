@@ -70,7 +70,20 @@ defmodule PlugSignature.ConnTest do
       parameter in the Authorization header
   """
   def with_signature(conn, key, key_id, opts \\ []) do
-    conn = maybe_add_host_header(conn)
+    age = Keyword.get(opts, :age, 0)
+    created = Keyword.get_lazy(opts, :created, fn -> created(age) end)
+    date = Keyword.get_lazy(opts, :date, fn -> http_date(age) end)
+    expires_in = Keyword.get(opts, :expires_in, nil)
+    expires = Keyword.get_lazy(opts, :expires, fn -> expires(expires_in) end)
+    algorithms = Keyword.get(opts, :algorithms, ["hs2019"])
+    algorithm = hd(algorithms)
+    headers = Keyword.get(opts, :headers, default_headers(algorithm))
+    header_name = Keyword.get(opts, :header_name, "authorization")
+
+    conn =
+      conn
+      |> maybe_add_host_header()
+      |> put_req_header("date", date)
 
     request_target =
       Keyword.get_lazy(opts, :request_target, fn ->
@@ -85,27 +98,17 @@ defmodule PlugSignature.ConnTest do
         end
       end)
 
-    age = Keyword.get(opts, :age, 0)
-    created = Keyword.get_lazy(opts, :created, fn -> created(age) end)
-    date = Keyword.get_lazy(opts, :date, fn -> http_date(age) end)
-    expires_in = Keyword.get(opts, :expires_in, nil)
-    expires = Keyword.get_lazy(opts, :expires, fn -> expires(expires_in) end)
-    algorithms = Keyword.get(opts, :algorithms, ["hs2019"])
-    algorithm = hd(algorithms)
-    headers = Keyword.get(opts, :headers, default_headers(algorithm))
-
     to_be_signed =
       Keyword.get_lazy(opts, :to_be_signed, fn ->
         headers
         |> String.split(" ")
-        |> Enum.map(fn
+        |> Enum.map_join("\n", fn
           "(request-target)" -> "(request-target): #{request_target}"
           "(created)" -> "(created): #{created}"
           "(expires)" -> "(expires): #{expires}"
           "date" -> "date: #{date}"
           header -> "#{header}: #{get_req_header(conn, header) |> Enum.join(",")}"
         end)
-        |> Enum.join("\n")
       end)
 
     signature =
@@ -114,7 +117,7 @@ defmodule PlugSignature.ConnTest do
         Base.encode64(signature)
       end)
 
-    authorization =
+    signature_string =
       [
         ~s(keyId="#{Keyword.get(opts, :key_id_override, key_id)}"),
         ~s(signature="#{Keyword.get(opts, :signature_override, signature)}"),
@@ -126,9 +129,13 @@ defmodule PlugSignature.ConnTest do
       |> Enum.reject(&Regex.match?(~r/^[^=]+=("")?$/, &1))
       |> Enum.join(",")
 
-    conn
-    |> put_req_header("date", date)
-    |> put_req_header("authorization", "Signature #{authorization}")
+    case header_name do
+      "authorization" ->
+        put_req_header(conn, "authorization", "Signature #{signature_string}")
+
+      _ ->
+        put_req_header(conn, header_name, signature_string)
+    end
   end
 
   defp default_headers("hs2019"), do: "(created)"
@@ -147,8 +154,7 @@ defmodule PlugSignature.ConnTest do
   def with_digest(conn, digests) when is_map(digests) do
     digest_header =
       digests
-      |> Enum.map(fn {alg, value} -> "#{alg}=#{value}" end)
-      |> Enum.join(",")
+      |> Enum.map_join(",", fn {alg, value} -> "#{alg}=#{value}" end)
 
     put_req_header(conn, "digest", digest_header)
   end
