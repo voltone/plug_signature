@@ -6,9 +6,7 @@ defmodule PlugSignature.ParserTest do
 
   test "valid" do
     assert {:ok, params} =
-             signature(
-               ~s(keyId=123,signature="0123456789abcdef",created=1562570728)
-             )
+             signature(~s(keyId=123,signature="0123456789abcdef",created=1562570728))
 
     assert params[:key_id] == "123"
     assert params[:signature] == "0123456789abcdef"
@@ -17,9 +15,7 @@ defmodule PlugSignature.ParserTest do
 
   test "extra whitespace" do
     assert {:ok, params} =
-             signature(
-               ~s(keyId=123, signature=  "0123456789abcdef", created = 1562570728)
-             )
+             signature(~s(keyId=123, signature=  "0123456789abcdef", created = 1562570728))
 
     assert params[:key_id] == "123"
     assert params[:signature] == "0123456789abcdef"
@@ -28,16 +24,12 @@ defmodule PlugSignature.ParserTest do
 
   test "duplicate params" do
     assert {:error, "malformed signature"} =
-             signature(
-               ~s(keyId=123,signature="0123456789abcdef",created=1562570728,keyId=234)
-             )
+             signature(~s(keyId=123,signature="0123456789abcdef",created=1562570728,keyId=234))
   end
 
   test "unknown and case mismatch params" do
     assert {:ok, params} =
-             signature(
-               ~s(keyColor=red,Signature="0123456789abcdef",created=1562570728)
-             )
+             signature(~s(keyColor=red,Signature="0123456789abcdef",created=1562570728))
 
     refute :keyColor in Keyword.keys(params)
     refute :signature in Keyword.keys(params)
