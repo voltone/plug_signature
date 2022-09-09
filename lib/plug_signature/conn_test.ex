@@ -102,14 +102,13 @@ defmodule PlugSignature.ConnTest do
       Keyword.get_lazy(opts, :to_be_signed, fn ->
         headers
         |> String.split(" ")
-        |> Enum.map(fn
+        |> Enum.map_join("\n", fn
           "(request-target)" -> "(request-target): #{request_target}"
           "(created)" -> "(created): #{created}"
           "(expires)" -> "(expires): #{expires}"
           "date" -> "date: #{date}"
           header -> "#{header}: #{get_req_header(conn, header) |> Enum.join(",")}"
         end)
-        |> Enum.join("\n")
       end)
 
     signature =
@@ -155,8 +154,7 @@ defmodule PlugSignature.ConnTest do
   def with_digest(conn, digests) when is_map(digests) do
     digest_header =
       digests
-      |> Enum.map(fn {alg, value} -> "#{alg}=#{value}" end)
-      |> Enum.join(",")
+      |> Enum.map_join(",", fn {alg, value} -> "#{alg}=#{value}" end)
 
     put_req_header(conn, "digest", digest_header)
   end
