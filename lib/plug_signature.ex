@@ -48,6 +48,11 @@ defmodule PlugSignature do
   * `:callback_module` (mandatory) - the name of a callback module implementing
     the `PlugSignature.Callback` behaviour; this module must implement the
     `c:PlugSignature.Callback.client_lookup/3` callback
+  * `:header_name` - name of the request HTTP header from which to take the
+    signature; when set to "authorization" (the default) all Authorization
+    header values are scanned for the first entry with a scheme of "Signature";
+    for any other value, the contents of the first HTTP header with that name
+    is used
   * `:algorithms` - the signature algorithms, as defined in the IETF
     specification; a list containing one or more of:
 
