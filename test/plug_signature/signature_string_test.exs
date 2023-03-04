@@ -255,7 +255,14 @@ defmodule PlugSignature.SignatureStringTest do
         [path, query] -> {path, query}
       end
 
+    host =
+      case List.keyfind(headers, "host", 0) do
+        {"host", host} -> host
+        nil -> nil
+      end
+
     %Plug.Conn{
+      host: host || "www.example.com",
       method: method,
       request_path: request_path,
       query_string: query_string,

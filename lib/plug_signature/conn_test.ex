@@ -82,7 +82,6 @@ defmodule PlugSignature.ConnTest do
 
     conn =
       conn
-      |> maybe_add_host_header()
       |> put_req_header("date", date)
 
     request_target =
@@ -107,6 +106,7 @@ defmodule PlugSignature.ConnTest do
           "(created)" -> "(created): #{created}"
           "(expires)" -> "(expires): #{expires}"
           "date" -> "date: #{date}"
+          "host" -> "host: #{conn.host}"
           header -> "#{header}: #{get_req_header(conn, header) |> Enum.join(",")}"
         end)
       end)
@@ -221,18 +221,6 @@ defmodule PlugSignature.ConnTest do
     now = DateTime.utc_now() |> DateTime.to_unix()
     to_string(now + validity)
   end
-
-  defp maybe_add_host_header(%Plug.Conn{host: host} = conn) when is_binary(host) do
-    case get_req_header(conn, "host") do
-      [] ->
-        put_req_header(conn, "host", host)
-
-      _ ->
-        conn
-    end
-  end
-
-  defp maybe_add_host_header(conn), do: conn
 
   defp raise_on_missing_phoenix_conntest! do
     Code.ensure_loaded?(Phoenix.ConnTest) ||

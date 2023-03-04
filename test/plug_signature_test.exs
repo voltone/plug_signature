@@ -206,7 +206,7 @@ defmodule PlugSignatureTest do
         conn =
           conn()
           |> with_signature(key, key_id, config)
-          |> put_req_header("host", "example.org")
+          |> Map.put(:host, "example.org")
           |> PlugSignature.call(PlugSignature.init(config))
 
         assert conn.halted
