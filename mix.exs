@@ -27,7 +27,7 @@ defmodule PlugSignature.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:plug, "~> 1.14"},
+      {:plug, "~> 1.5"},
       {:nimble_parsec, "~> 1.0"},
       {:ex_doc, "~> 0.21", only: :dev},
       {:credo, "~> 1.1", only: :dev},
