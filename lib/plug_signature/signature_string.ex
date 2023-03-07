@@ -3,7 +3,9 @@ defmodule PlugSignature.SignatureString do
 
   def build(conn, signature_opts, algorithm, header_list) do
     signature_string =
-      Enum.map_join(header_list, "\n", &header_part(conn, signature_opts, algorithm, &1))
+      header_list
+      |> Enum.map(&String.downcase/1)
+      |> Enum.map_join("\n", &header_part(conn, signature_opts, algorithm, &1))
 
     {:ok, signature_string}
   rescue
@@ -30,10 +32,11 @@ defmodule PlugSignature.SignatureString do
     "(expires): #{Keyword.fetch!(signature_opts, :expires)}"
   end
 
-  defp header_part(conn, _signature_opts, _algorithm, header)
-       when header not in ["(created)", "(expires)"] do
-    header_name = String.downcase(header)
+  defp header_part(conn, _signature_opts, _algorithm, "host") do
+    "host: #{conn.host}"
+  end
 
+  defp header_part(conn, _signature_opts, _algorithm, header_name) do
     values =
       conn.req_headers
       |> Enum.filter(&match?({^header_name, _}, &1))
